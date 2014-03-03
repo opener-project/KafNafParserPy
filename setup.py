@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(name='KafNafParser',
-      version='1.2',
+      version='1.3',
       description = 'Parser between KAF and NAF',
       author = 'Ruben Izquierdo',
       url = 'https://github.com/cltl/KafNafParserPy',
