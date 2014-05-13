@@ -111,6 +111,10 @@ class Copinion:
             self.node = etree.Element('opinion')
         else:
             self.node = node  
+            
+    def set_comment(self,c):
+        c = c.replace('--','- -')
+        self.node.insert(0,etree.Comment(c) )
     
     def set_id(self,my_id):
         if self.type == 'NAF':
@@ -120,9 +124,9 @@ class Copinion:
             
     def get_id(self):
         if self.type == 'NAF':
-            self.node.het('id')
+            return self.node.get('id')
         elif self.type == 'KAF':
-            self.node.get('oid')        
+            return self.node.get('oid')        
         
     def set_holder(self,hol):
         self.node.append(hol.get_node())
@@ -198,3 +202,10 @@ class Copinions:
                          
     def get_node(self):
         return self.node
+        
+    def remove_this_opinion(self,opinion_id):
+        for opi in self.get_opinions():
+            if opi.get_id() == opinion_id:
+                self.node.remove(opi.get_node())
+                break
+                

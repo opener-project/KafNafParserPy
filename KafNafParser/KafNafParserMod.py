@@ -13,7 +13,6 @@
 # Ruben 21-Feb-2014
 #	+ Included coreference layer
 
-
 __last_modified  = '17dec2013'
 
 from lxml import etree
@@ -58,6 +57,7 @@ class KafNafParser:
 
 		#######
 		self.dict_tokens_for_tid = None
+		self.terms_for_token = None
 		##
 
 		self.lang = self.root.get('{http://www.w3.org/XML/1998/namespace}lang')
@@ -233,9 +233,10 @@ class KafNafParser:
 			yield token
 
 	def get_terms(self):
-		for term in self.term_layer:
-			yield term
-
+		if self.term_layer is not None:
+			for term in self.term_layer:
+				yield term
+		
 	def get_token(self,token_id):
 		if self.text_layer is not None:
 			return self.text_layer.get_wf(token_id)
@@ -266,14 +267,37 @@ class KafNafParser:
 
 	def dump(self,filename=sys.stdout):
 		self.tree.write(filename,encoding='UTF-8',pretty_print=True,xml_declaration=True)
-
-
+			
+	def remove_dependency_layer(self):
+		if self.dependency_layer is not None:
+			this_node = self.dependency_layer.get_node()
+			self.root.remove(this_node)
+			self.dependency_layer = self.my_dependency_extractor = None
+			
+		if self.header is not None:
+			self.header.remove_lp('deps')
+			
+			
+	def remove_this_opinion(self,opinion_id):
+		if self.opinion_layer is not None:
+			self.opinion_layer.remove_this_opinion(opinion_id)
+			
 	def remove_opinion_layer(self):
 		if self.opinion_layer is not None:
 			this_node = self.opinion_layer.get_node()
 			self.root.remove(this_node)
 			self.opinion_layer = None
-
+			
+		if self.header is not None:
+			self.header.remove_lp('opinions')
+			
+	def remove_properties(self):
+		if self.features_layer is not None:
+			self.features_layer.remove_properties()
+			
+		if self.header is not None:
+			self.header.remove_lp('features')
+			
 	def remove_term_layer(self):
 		if self.term_layer is not None:
 			this_node = self.term_layer.get_node()
@@ -283,6 +307,10 @@ class KafNafParser:
 			if self.header is not None:
 				self.header.remove_lp('terms')
 
+			
+		if self.header is not None:
+			self.header.remove_lp('terms')
+			
 	def get_constituency_extractor(self):
 		if self.constituency_layer is not None:	##Otherwise there are no constituens
 			if self.my_constituency_extractor is None:
@@ -321,8 +349,14 @@ class KafNafParser:
 			self.dependency_layer = Cdependencies()
 			self.root.append(self.dependency_layer.get_node())
 		self.dependency_layer.add_dependency(my_dep)
-
-
+		
+	## Adds a property to the feature layer
+	def add_property(self,label,term_span,pid=None):
+		if self.features_layer is None:
+			self.features_layer = Cfeatures(type=self.type)
+			self.root.append(self.features_layer.get_node())
+		self.features_layer.add_property(pid, label,term_span)
+	
 	## EXTRA FUNCTIONS
 	## Gets the token identifiers in the span of a term id
 	def get_dict_tokens_for_termid(self, term_id):
@@ -332,7 +366,25 @@ class KafNafParser:
 				self.dict_tokens_for_tid[term.get_id()] = term.get_span().get_span_ids()
 
 		return self.dict_tokens_for_tid.get(term_id,[])
-
-
-
-
+	
+	## Maps a list of token ids to term ids
+	def map_tokens_to_terms(self,list_tokens):
+		if self.terms_for_token is None:
+			self.terms_for_token = {}
+			for term in self.get_terms():
+				termid = term.get_id()
+				token_ids = term.get_span().get_span_ids()
+				for tokid in token_ids:
+					if tokid not in self.terms_for_token:
+						self.terms_for_token[tokid] = [termid]
+					else:
+						self.terms_for_token[tokid].append(termid)
+					
+		ret = set()
+		for my_id in list_tokens:
+			term_ids = self.terms_for_token.get(my_id,[])
+			ret |= set(term_ids)
+		return sorted(list(ret))
+	
+	def remove_tokens_of_sentence(self,sentence_id):
+		self.text_layer.remove_tokens_of_sentence(sentence_id)
