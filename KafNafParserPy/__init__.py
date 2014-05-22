@@ -1,4 +1,4 @@
-from KafNafParserMod import *
+from KafNafParserMod import KafNafParser
 from header_data import *
 from external_references_data import *
 from span_data import *

@@ -1,5 +1,5 @@
 ## LIST OF CHANGES
-# Ruben 8-nov-2013
+# Ruben 8-nov-2013 
 #    + included layers for entities, properties, opinions
 #    + renamed all classes to Cnameoftheclass
 # Ruben 15-nov-2013
@@ -12,6 +12,8 @@
 #
 # Ruben 21-Feb-2014
 #	+ Included coreference layer
+from KafNafParserPy.features_data import Cfeatures
+	
 
 __last_modified  = '17dec2013'
 
@@ -26,7 +28,6 @@ from constituency_data import *
 from dependency_data import *
 from feature_extractor import Cdependency_extractor, Cconstituency_extractor
 from coreference_data import *
-from references_data import Creferences
 
 import sys
 
@@ -39,7 +40,7 @@ class KafNafParser:
 		self.tree = etree.parse(filename,etree.XMLParser(remove_blank_text=True))
 		self.root = self.tree.getroot()
 		self.type = self.root.tag # KAF NAF
-
+		
 		self.header = None
 		self.text_layer = None
 		self.term_layer = None
@@ -49,41 +50,41 @@ class KafNafParser:
 		self.constituency_layer = None
 		self.dependency_layer = None
 		self.coreference_layer = None
-
+		
 		## Specific feature extractor for complicated layers
 		self.my_dependency_extractor = None
 		self.my_constituency_extractor = None
 		##################################################
-
+		
 		#######
 		self.dict_tokens_for_tid = None
 		self.terms_for_token = None
 		##
-
+		
 		self.lang = self.root.get('{http://www.w3.org/XML/1998/namespace}lang')
 		self.version = self.root.get('version')
-
+		
 		if self.type == 'NAF':
 			node_header = self.root.find('nafHeader')
 		elif self.type == 'KAF':
 			node_header = self.root.find('kafHeader')
-
+			
 		if node_header is not None:
 			self.header = CHeader(node_header,self.type)
-
+		
 		# Text layer adapted to naf/kaf
 		node_text = self.root.find('text')
 		if node_text is not None:
 			self.text_layer = Ctext(node=node_text,type=self.type)
-
+			
 		node_term = self.root.find('terms')
 		if node_term is not None:
 			self.term_layer = Cterms(node=node_term,type=self.type)
-
+			
 		node_entity = self.root.find('entities')
 		if node_entity is not None:
 			self.entity_layer = Centities(node_entity,type=self.type)
-
+			
 		node_features = self.root.find('features')
 		if node_features is not None:
 			self.features_layer = Cfeatures(node_features,type=self.type)
@@ -91,7 +92,7 @@ class KafNafParser:
 		node_opinions = self.root.find('opinions')
 		if node_opinions is not None:
 			self.opinion_layer = Copinions(node_opinions,type=self.type)
-
+			
 		# Definition KAF/NAF is the same
 		node_constituency = self.root.find('constituency')
 		if node_constituency is not None:
@@ -101,172 +102,173 @@ class KafNafParser:
 		node_dependency = self.root.find('deps')
 		if node_dependency is not None:
 			self.dependency_layer = Cdependencies(node_dependency)
-
+			
 		node_coreferences = self.root.find('coreferences')
 		if node_coreferences is not None:
 			self.coreference_layer = Ccoreferences(node_coreferences,type=self.type)
-
+	
 	def get_type(self):
 		return self.type
-
+	
 	def get_filename(self):
 		return self.filename
-
+		
 	def to_kaf(self):
 		#Convert the root
 		if self.type == 'NAF':
 			self.root.tag = 'KAF'
 			self.type = 'KAF'
-
-		## Convert the header
+		
+		## Convert the header	
 		if self.header is not None:
 			self.header.to_kaf()
-
+		
 		## Convert the token layer
 		if self.text_layer is not None:
 			self.text_layer.to_kaf()
-
+			
 		## Convert the term layer
 		if self.term_layer is not None:
 			self.term_layer.to_kaf()
-
+			
 		## Convert the entity layer
 		if self.entity_layer is not None:
 			self.entity_layer.to_kaf()
-
+			
 		## Convert the features layer
 		## There is no feature layer defined in NAF, but we assumed
 		## that is defined will be followin the same rules
 		if self.features_layer is not None:
 			self.features_layer.to_kaf()
-
-
+			
+		
 		##Convert the opinion layer
 		if self.opinion_layer is not None:
 			self.opinion_layer.to_kaf()
-
+			
 		## Convert the constituency layer
 		## This layer is exactly the same in KAF/NAF
 		if self.constituency_layer is not None:
 			self.constituency_layer.to_kaf()	#Does nothing...
-
-
+			
+			
 		## Convert the dedepency layer
 		## It is not defined on KAF so we assme both will be similar
 		if self.dependency_layer is not None:
 			self.dependency_layer.to_kaf()
-
+			
 		if self.coreference_layer is not None:
 			self.coreference_layer.to_kaf()
-
-
+			
+		
 	def to_naf(self):
 		#Convert the root
 		if self.type == 'KAF':
 			self.root.tag = self.type = 'NAF'
-
-		## Convert the header
+		
+		## Convert the header	
 		if self.header is not None:
 			self.header.to_naf()
-
+		
 		## Convert the token layer
 		if self.text_layer is not None:
 			self.text_layer.to_naf()
-
-
+		
+			
 		## Convert the term layer
 		if self.term_layer is not None:
 			self.term_layer.to_naf()
-
-
+			
+		
 		## Convert the entity layer
 		if self.entity_layer is not None:
 			self.entity_layer.to_naf()
-
+		
 		## Convert the features layer
 		## There is no feature layer defined in NAF, but we assumed
 		## that is defined will be followin the same rules
 		if self.features_layer is not None:
 			self.features_layer.to_naf()
-
-
+			
+		
 		##Convert the opinion layer
 		if self.opinion_layer is not None:
 			self.opinion_layer.to_naf()
-
-
+		
+			
 		## Convert the constituency layer
 		## This layer is exactly the same in KAF/NAF
 		if self.constituency_layer is not None:
 			self.constituency_layer.to_naf()	#Does nothing...
-
-
+			
+			
 		## Convert the dedepency layer
 		## It is not defined on KAF so we assume both will be similar
 		if self.dependency_layer is not None:
 			self.dependency_layer.to_naf()	  #Does nothing...
-
+			
 		if self.coreference_layer is not None:
 			self.coreference_layer.to_naf()
+		
 
-
-
+			
 	def print_constituency(self):
 		print self.constituency_layer
-
+		
 	def get_trees(self):
 		if self.constituency_layer is not None:
 			for tree in self.constituency_layer.get_trees():
 				yield tree
-
-
+		
+		
 	def get_dependencies(self):
 		if self.dependency_layer is not None:
 			for dep in self.dependency_layer.get_dependencies():
 				yield dep
-
+				
 	def get_language(self):
 		return self.lang
-
+		
 	def get_tokens(self):
 		for token in self.text_layer:
 			yield token
-
+			
 	def get_terms(self):
 		if self.term_layer is not None:
 			for term in self.term_layer:
 				yield term
-		
+			
 	def get_token(self,token_id):
 		if self.text_layer is not None:
 			return self.text_layer.get_wf(token_id)
 		else:
 			return None
-
+	
 	def get_term(self,term_id):
 		if self.term_layer is not None:
 			return self.term_layer.get_term(term_id)
 		else:
 			return None
-
+		
 	def get_properties(self):
 		if self.features_layer is not None:
 			for property in self.features_layer.get_properties():
 				yield property
-
+		
 	def get_entities(self):
 		if self.entity_layer is not None:
 			for entity in self.entity_layer:
 				yield entity
-
+				
 	def get_opinions(self):
 		if self.opinion_layer is not None:
 			for opinion in self.opinion_layer.get_opinions():
 				yield opinion
-
-
+		
+	
 	def dump(self,filename=sys.stdout):
 		self.tree.write(filename,encoding='UTF-8',pretty_print=True,xml_declaration=True)
+		
 			
 	def remove_dependency_layer(self):
 		if self.dependency_layer is not None:
@@ -298,15 +300,12 @@ class KafNafParser:
 		if self.header is not None:
 			self.header.remove_lp('features')
 			
+			
 	def remove_term_layer(self):
 		if self.term_layer is not None:
 			this_node = self.term_layer.get_node()
 			self.root.remove(this_node)
 			self.term_layer = None
-
-			if self.header is not None:
-				self.header.remove_lp('terms')
-
 			
 		if self.header is not None:
 			self.header.remove_lp('terms')
@@ -318,7 +317,7 @@ class KafNafParser:
 			return self.my_constituency_extractor
 		else:
 			return None
-
+	
 	def get_dependency_extractor(self):
 		if self.dependency_layer is not None:	#otherwise there are no dependencies
 			if self.my_dependency_extractor is None:
@@ -326,24 +325,24 @@ class KafNafParser:
 			return self.my_dependency_extractor
 		else:
 			return None
-
+		
 	## ADDING METHODS
 	def add_wf(self,wf_obj):
 		if self.text_layer is None:
 			self.text_layer = Ctext(type=self.type)
 			self.root.append(self.text_layer.get_node())
-		self.text_layer.add_wf(wf_obj)
-
+		self.text_layer.add_wf(wf_obj)	
+	
 	def add_opinion(self,opinion_obj):
 		if self.opinion_layer is None:
 			self.opinion_layer = Copinions()
 			self.root.append(self.opinion_layer.get_node())
 		self.opinion_layer.add_opinion(opinion_obj)
-
+		
 	def add_linguistic_processor(self, layer ,my_lp):
 		self.header.add_linguistic_processor(layer,my_lp)
-
-
+		
+	
 	def add_dependency(self,my_dep):
 		if self.dependency_layer is None:
 			self.dependency_layer = Cdependencies()
@@ -364,7 +363,7 @@ class KafNafParser:
 			self.dict_tokens_for_tid = {}
 			for term in self.get_terms():
 				self.dict_tokens_for_tid[term.get_id()] = term.get_span().get_span_ids()
-
+		
 		return self.dict_tokens_for_tid.get(term_id,[])
 	
 	## Maps a list of token ids to term ids
@@ -388,3 +387,8 @@ class KafNafParser:
 	
 	def remove_tokens_of_sentence(self,sentence_id):
 		self.text_layer.remove_tokens_of_sentence(sentence_id)
+		
+		
+		
+			
+		
