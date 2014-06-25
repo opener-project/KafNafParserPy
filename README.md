@@ -28,4 +28,6 @@ Contact
 
 License
 ------
-Sofware distributed under GPL.v3, see LICENSE file for details.
+
+The source code of this repository is licensed under the Apache 2.0 license
+unless stated otherwise. See the file LICENSE.txt for more information.
