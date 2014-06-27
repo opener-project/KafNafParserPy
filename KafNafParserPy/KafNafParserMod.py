@@ -28,7 +28,7 @@ from constituency_data import *
 from dependency_data import *
 from feature_extractor import Cdependency_extractor, Cconstituency_extractor
 from coreference_data import *
-
+from srl_data import *
 import sys
 
 
@@ -50,6 +50,7 @@ class KafNafParser:
 		self.constituency_layer = None
 		self.dependency_layer = None
 		self.coreference_layer = None
+		self.srl_layer = None
 		
 		## Specific feature extractor for complicated layers
 		self.my_dependency_extractor = None
@@ -106,6 +107,10 @@ class KafNafParser:
 		node_coreferences = self.root.find('coreferences')
 		if node_coreferences is not None:
 			self.coreference_layer = Ccoreferences(node_coreferences,type=self.type)
+			
+		node_srl = self.root.find('srl')
+		if node_srl is not None:
+			self.srl_layer = Csrl(node_srl)
 	
 	def get_type(self):
 		return self.type
@@ -265,10 +270,21 @@ class KafNafParser:
 			for opinion in self.opinion_layer.get_opinions():
 				yield opinion
 		
+	def get_predicates(self):
+		if self.srl_layer is not None:
+			for pred in self.srl_layer.get_predicates():
+				yield pred
 	
 	def dump(self,filename=sys.stdout):
 		self.tree.write(filename,encoding='UTF-8',pretty_print=True,xml_declaration=True)
 		
+		
+	def remove_entity_layer(self):
+		if self.entity_layer is not None:
+			this_node = self.entity_layer.get_node()
+			self.root.remove(this_node)
+		if self.header is not None:
+			self.header.remove_lp('entities')
 			
 	def remove_dependency_layer(self):
 		if self.dependency_layer is not None:
@@ -280,6 +296,12 @@ class KafNafParser:
 			self.header.remove_lp('deps')
 			
 			
+	def remove_constituency_layer(self):
+		if self.constituency_layer is not None:
+			this_node = self.constituency_layer.get_node()
+			self.root.remove(this_node)
+		if self.header is not None:
+			self.header.remove_lp('constituents')
 	def remove_this_opinion(self,opinion_id):
 		if self.opinion_layer is not None:
 			self.opinion_layer.remove_this_opinion(opinion_id)
@@ -388,6 +410,8 @@ class KafNafParser:
 	def remove_tokens_of_sentence(self,sentence_id):
 		self.text_layer.remove_tokens_of_sentence(sentence_id)
 		
+	def remove_terms(self,list_term_ids):
+			self.term_layer.remove_terms(list_term_ids)
 		
 		
 			
